@@ -1,0 +1,65 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080" # Expose le port 8080 du conteneur sur le port 8080 de l'hôte
+    environment:
+      # Variables d'environnement pour la configuration de la base de données
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/todo
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=rootpassword
+      - SPRING_PROFILES_ACTIVE=dev # Active le profil 'docker' dans Spring Boot
+    depends_on:
+      db:
+        condition: service_healthy # Attend que la base de données soit prête
+    healthcheck:
+      # Vérifie la santé du backend via l'actuator
+      test:
+        ["CMD", "curl", "-f", "http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s # Donne du temps au backend pour démarrer
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "80:80" # Expose le port 80 du conteneur sur le port 80 de l'hôte
+    depends_on:
+      - backend # S'assure que le backend démarre avant le frontend
+
+  db:
+    image: mysql:8.0
+    environment:
+      # Configuration de la base de données MySQL
+      - MYSQL_DATABASE=todo
+      - MYSQL_ROOT_PASSWORD=rootpassword
+      - MYSQL_USER=user
+      - MYSQL_PASSWORD=userpassword
+    volumes:
+      - mysql_data:/var/lib/mysql # Persiste les données de MySQL
+    healthcheck:
+      # Vérifie la santé de la base de données
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-p${MYSQL_ROOT_PASSWORD}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "3306:3306" # Expose le port MySQL pour le développement local
+
+volumes:
+  mysql_data: # Définit un volume pour les données MySQL

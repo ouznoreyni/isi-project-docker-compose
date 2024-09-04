@@ -30,8 +30,8 @@ projet/
 
 1. Clonez le dépôt :
    ```
-   git clone [URL_DU_REPO]
-   cd [NOM_DU_PROJET]
+   git clone git@github.com:ouznoreyni/isi-project-docker-compose.git
+   cd isi-project-docker-compose
    ```
 
 2. Lancez l'application :
